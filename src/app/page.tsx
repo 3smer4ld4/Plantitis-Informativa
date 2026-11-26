@@ -1,7 +1,11 @@
-
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { signOutAction } from "@/app/auth/actions";
+
+export const instant = false;
 
 type Categoria = {
   id: number;
@@ -10,219 +14,250 @@ type Categoria = {
   descripcion: string | null;
 };
 
-// Fotografías de las categorías
 const imagenesPorCategoria: Record<string, string> = {
   "plantas-interior":
-    "https://images.unsplash.com/photo-1497250681960-ef046c08a56e",
-
+    "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85",
   "plantas-exterior":
-    "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
-
+    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b",
   cactus:
-    "https://images.unsplash.com/photo-1509423350716-97f2360af7e4",
-
+    "https://images.unsplash.com/photo-1509423350716-97f9360b4e09",
   suculentas:
-    "https://images.unsplash.com/photo-1485955900006-10f4d324d411",
-
-  "plantas-acuaticas":
-    "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc",
-
-  "plantas-carnivoras":
-    "https://images.unsplash.com/photo-1463936575829-25148e1abc6b",
-
-  "plantas-ornamentales":
     "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a",
-
+  "plantas-acuaticas":
+    "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8",
+  "plantas-carnivoras":
+    "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
+  "plantas-ornamentales":
+    "https://images.unsplash.com/photo-1497250681960-ef046c08a56e",
   "plantas-comestibles":
-    "https://images.unsplash.com/photo-1540420773420-3366772f4999",
-
+    "https://images.unsplash.com/photo-1495521821757-a1efb6729352",
   "plantas-medicinales":
-    "https://images.unsplash.com/photo-1471193945509-9ad0617afabf",
-
+    "https://images.unsplash.com/photo-1504545102780-26774c1bb073",
   "plantas-aromaticas":
-    "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735",
-
+    "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
   arboles:
     "https://images.unsplash.com/photo-1448375240586-882707db888b",
-
   arbustos:
     "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
-
   "plantas-trepadoras":
-    "https://images.unsplash.com/photo-1490750967868-88aa4486c946",
-
+    "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc",
   "plantas-epifitas":
-    "https://images.unsplash.com/photo-1509423350716-97f2360af7e4",
-
+    "https://images.unsplash.com/photo-1509423350716-97f9360b4e09",
   "nativas-el-salvador":
     "https://images.unsplash.com/photo-1472396961693-142e6e269027",
-
   "endemicas-el-salvador":
-    "https://images.unsplash.com/photo-1511497584788-876760111969",
+    "https://images.unsplash.com/photo-1448375240586-882707db888b",
 };
 
 async function ListaCategorias() {
+  await connection();
+
   const supabase = await createClient();
 
-  const { data: categorias, error } = await supabase
+  const { data, error } = await supabase
     .from("categorias")
     .select("id, nombre, slug, descripcion")
-    .order("nombre", { ascending: true });
+    .order("nombre");
 
   if (error) {
     console.error("Error al cargar categorías:", error.message);
 
     return (
-      <p className="text-center text-red-700">
-        No fue posible cargar las categorías.
+      <p className="rounded-xl bg-red-50 p-5 text-center text-red-700">
+        No se pudieron cargar las categorías.
       </p>
     );
   }
 
-  const listaCategorias = (categorias ?? []) as Categoria[];
+  const listaCategorias: Categoria[] = data ?? [];
 
   if (listaCategorias.length === 0) {
     return (
-      <p className="text-center text-stone-600">
+      <p className="rounded-xl bg-stone-100 p-5 text-center text-gray-600">
         Todavía no hay categorías registradas.
       </p>
     );
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {listaCategorias.map((categoria) => (
-        <Link
+        <article
           key={categoria.id}
-          href={`/categorias/${categoria.slug}`}
-          className="group overflow-hidden rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-700 hover:shadow-lg"
+          className="group overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-green-200 hover:shadow-xl"
         >
-          {/* Imagen de la categoría */}
-          <div className="mb-5 h-44 w-full overflow-hidden rounded-xl bg-emerald-50">
-            {imagenesPorCategoria[categoria.slug] ? (
-              <img
-                src={`${imagenesPorCategoria[categoria.slug]}?auto=format&fit=crop&w=900&q=80`}
-                alt={categoria.nombre}
-                loading="lazy"
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          <Link
+            href={`/categorias/${categoria.slug}`}
+            className="flex h-full flex-col"
+          >
+            <div className="relative h-56 overflow-hidden bg-green-50">
+              <Image
+                src={
+                  imagenesPorCategoria[categoria.slug] ??
+                  imagenesPorCategoria["plantas-interior"]
+                }
+                alt={`Imagen de ${categoria.nombre}`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
-            ) : (
-              <div className="flex h-full items-center justify-center text-5xl">
-                🌿
-              </div>
-            )}
-          </div>
 
-          {/* Información de la categoría */}
-          <h3 className="min-h-12 font-semibold text-emerald-950 group-hover:text-emerald-700">
-            {categoria.nombre}
-          </h3>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+            </div>
 
-          <p className="mt-2 min-h-12 text-sm leading-6 text-stone-600">
-            {categoria.descripcion ||
-              "Descubre las plantas de esta categoría."}
-          </p>
+            <div className="flex min-h-52 flex-1 flex-col p-6">
+              <h3 className="text-lg font-bold leading-snug text-gray-900 transition-colors group-hover:text-green-800">
+                {categoria.nombre}
+              </h3>
 
-          <span className="mt-5 inline-block text-sm font-semibold text-emerald-800">
-            Explorar categoría →
-          </span>
-        </Link>
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
+                {categoria.descripcion ??
+                  "Explora información y características de esta categoría botánica."}
+              </p>
+
+              <span className="mt-auto inline-block pt-5 font-semibold text-green-800 transition-colors group-hover:text-green-600">
+                Explorar categoría
+                <span aria-hidden="true"> →</span>
+              </span>
+            </div>
+          </Link>
+        </article>
       ))}
     </div>
   );
 }
 
-export default function Home() {
+async function Navegacion() {
+  await connection();
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
-    <main className="min-h-screen bg-[#fafbf7] text-stone-800">
-      {/* Navegación */}
-      <header className="border-b border-emerald-900/10 bg-white">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+    <nav
+      aria-label="Navegación principal"
+      className="flex items-center gap-2"
+    >
+      <Link
+        href="/"
+        className="rounded-full px-4 py-2 font-medium text-green-900 transition hover:bg-green-50 hover:text-green-700"
+      >
+        Inicio
+      </Link>
+
+      {user ? (
+        <>
           <Link
-            href="/"
-            className="text-xl font-bold tracking-tight text-emerald-950"
+            href="/dashboard"
+            className="rounded-full px-5 py-2 font-semibold text-green-800 transition hover:bg-green-50"
           >
-            Plantitis{" "}
-            <span className="text-emerald-600">Informativa</span>
+            Mi cuenta
           </Link>
 
-          <div className="flex items-center gap-6 text-sm font-medium text-stone-600">
-            <a
-              href="#categorias"
-              className="transition hover:text-emerald-700"
+          <form action={signOutAction}>
+            <button
+              type="submit"
+              className="rounded-full bg-red-700 px-5 py-2 font-semibold text-white transition hover:bg-red-800"
             >
-              Categorías
-            </a>
+              Cerrar sesión
+            </button>
+          </form>
+        </>
+      ) : (
+        <>
+          <Link
+            href="/login"
+            className="rounded-full px-5 py-2 font-semibold text-green-800 transition hover:bg-green-50"
+          >
+            Iniciar sesión
+          </Link>
 
-            <a
-              href="#nosotros"
-              className="transition hover:text-emerald-700"
-            >
-              Nosotros
-            </a>
-          </div>
-        </nav>
+          <Link
+            href="/registro"
+            className="rounded-full bg-green-800 px-5 py-2 font-semibold text-white shadow-sm transition hover:bg-green-900"
+          >
+            Crear cuenta
+          </Link>
+        </>
+      )}
+    </nav>
+  );
+}
+
+export default function Home() {
+  return (
+    <main className="min-h-screen bg-[#faf9f5] text-gray-800">
+      <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+          <Link
+            href="/"
+            className="text-xl font-bold tracking-tight text-green-900 sm:text-2xl"
+          >
+            Plantitis Informativa
+          </Link>
+
+          <Suspense fallback={<div className="h-10 w-40" />}>
+            <Navegacion />
+          </Suspense>
+        </div>
       </header>
 
-      {/* Portada */}
-      <section className="relative overflow-hidden bg-[#eaf2e8]">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-24 lg:grid-cols-2 lg:py-32">
-          <div>
-            <span className="mb-6 inline-block rounded-full bg-white px-4 py-2 text-sm font-medium text-emerald-800">
-              🌱 Explora el mundo vegetal
+      <section className="relative overflow-hidden bg-gradient-to-br from-green-100 via-[#f1f6e9] to-[#faf9f5] px-6 py-20 sm:py-28">
+        <div className="mx-auto max-w-5xl text-center">
+          <span className="inline-flex rounded-full border border-green-200 bg-white/70 px-4 py-2 text-sm font-medium text-green-900">
+            Enciclopedia botánica
+          </span>
+
+          <div className="mt-7 text-5xl" aria-hidden="true">
+            🪴
+          </div>
+
+          <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-green-950 sm:text-5xl lg:text-6xl">
+            Descubre el fascinante mundo de las plantas
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-gray-600 sm:text-lg">
+            Un espacio informativo para conocer distintas especies vegetales,
+            sus características, cuidados, distribución y usos documentados.
+          </p>
+
+          <a
+            href="#categorias"
+            className="mt-9 inline-flex items-center rounded-full bg-green-800 px-8 py-3.5 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-900 hover:shadow-md"
+          >
+            Explorar categorías
+            <span className="ml-2" aria-hidden="true">
+              ↓
             </span>
-
-            <h1 className="max-w-2xl text-5xl font-bold leading-tight tracking-tight text-emerald-950 md:text-6xl">
-              Un mundo de plantas por descubrir.
-            </h1>
-
-            <p className="mt-6 max-w-xl text-lg leading-8 text-stone-600">
-              Aprende sobre especies vegetales, sus características,
-              cuidados, distribución y la diversidad de nuestro planeta.
-            </p>
-
-            <a
-              href="#categorias"
-              className="mt-9 inline-flex items-center justify-center rounded-full bg-emerald-800 px-7 py-4 font-semibold text-white transition hover:bg-emerald-700"
-            >
-              Explorar catálogo →
-            </a>
-          </div>
-
-          <div className="flex min-h-72 items-center justify-center rounded-[2rem] bg-[#d5e6d3] p-10">
-            <div className="text-center">
-              <span className="text-9xl">🪴</span>
-              <p className="mt-5 text-sm font-medium tracking-wide text-emerald-900">
-                CONOCE · APRENDE · CONSERVA
-              </p>
-            </div>
-          </div>
+          </a>
         </div>
       </section>
 
-      {/* Categorías */}
       <section
         id="categorias"
-        className="mx-auto max-w-7xl px-6 py-24"
+        className="mx-auto max-w-7xl scroll-mt-24 px-6 py-16 sm:py-20"
       >
         <div className="mb-12 text-center">
-          <span className="text-sm font-bold uppercase tracking-[0.2em] text-emerald-700">
-            Nuestro catálogo
+          <span className="text-sm font-semibold uppercase tracking-widest text-green-700">
+            Catálogo botánico
           </span>
 
-          <h2 className="mt-4 text-3xl font-bold text-emerald-950 md:text-4xl">
-            Explora por categorías
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Explora nuestras categorías
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl leading-7 text-stone-600">
-            Encuentra diferentes grupos de plantas y descubre sus
-            características, diversidad y formas de cultivo.
+          <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-600">
+            Encuentra plantas según sus características, formas de crecimiento
+            y clasificación.
           </p>
         </div>
 
         <Suspense
           fallback={
-            <p className="py-12 text-center text-stone-500">
+            <p className="rounded-xl bg-white p-8 text-center text-gray-500">
               Cargando categorías...
             </p>
           }
@@ -231,27 +266,32 @@ export default function Home() {
         </Suspense>
       </section>
 
-      {/* Presentación */}
-      <section id="nosotros" className="bg-[#eaf2e8] px-6 py-20">
+      <section className="border-y border-green-100 bg-green-50/70 px-6 py-16 sm:py-20">
         <div className="mx-auto max-w-4xl text-center">
-          <span className="text-4xl">🌳</span>
+          <span className="text-4xl" aria-hidden="true">
+            🌿
+          </span>
 
-          <h2 className="mt-5 text-3xl font-bold text-emerald-950">
-            Conocer las plantas es valorar la naturaleza
+          <h2 className="mt-5 text-2xl font-bold text-green-950 sm:text-3xl">
+            Conocimiento botánico a tu alcance
           </h2>
 
-          <p className="mt-6 text-lg leading-8 text-stone-600">
-            Plantitis Informativa es un espacio dedicado al conocimiento
-            botánico, la identificación de especies y la divulgación
-            responsable de información sobre el mundo vegetal.
+          <p className="mt-5 leading-8 text-gray-600">
+            Plantitis Informativa busca reunir información botánica organizada
+            y accesible, promoviendo el conocimiento y la conservación de la
+            diversidad vegetal.
           </p>
         </div>
       </section>
 
-      {/* Pie de página */}
-      <footer className="bg-emerald-950 px-6 py-8 text-center text-sm text-emerald-100">
+      <footer className="bg-green-950 px-6 py-8 text-center text-sm text-green-100">
         <p>
-          Plantitis Informativa · Un mundo de plantas por descubrir.
+          © 2026 Plantitis Informativa. Todos los derechos reservados para mi
+          gato.
+        </p>
+
+        <p className="mt-2 text-green-200/70">
+          Un proyecto educativo dedicado al conocimiento de las plantas.
         </p>
       </footer>
     </main>
