@@ -62,7 +62,7 @@ Antes de ejecutar el proyecto necesitas:
 ### 1. Clonar el repositorio
 
 ```bash
-git clone
+git clone https://github.com/3smer4ld4/Plantitis-Informativa.git
 ```
 
 ### 2. Entrar al proyecto
